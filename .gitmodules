@@ -1,0 +1,3 @@
+[submodule "docker/sam3"]
+	path = docker/sam3
+	url = https://github.com/facebookresearch/sam3.git

@@ -16,5 +16,5 @@
 # fi
 
 # Build Container
-echo "Building Container rl_gym:latest"
-docker build -t rl_gym:latest .
+echo "Building Container sam3:latest"
+docker build -t sam3:latest .

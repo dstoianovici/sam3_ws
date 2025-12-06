@@ -3,9 +3,9 @@
 # Note:
 #   - Jax currently supports CUDA versions up to 11.3.
 #   - Tensorflow required CUDA versions after 11.2.
-ARG cuda_docker_tag="12.8.0-cudnn-devel-ubuntu20.04"
+ARG cuda_docker_tag="12.8.0-cudnn-devel-ubuntu24.04"
 FROM nvidia/cuda:${cuda_docker_tag}
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update && apt upgrade -y
 
@@ -13,7 +13,7 @@ RUN apt update && apt upgrade -y
 RUN apt install tzdata -y
 RUN apt install git \
     wget \
-    libgl1-mesa-glx \
+    # libgl1-mesa-glx \
     software-properties-common \
     vim \
     gcc \
@@ -25,61 +25,55 @@ RUN apt install git \
 
 # Install python3.10.
 RUN add-apt-repository ppa:deadsnakes/ppa -y
-RUN apt update -y
+RUN apt update --fix-missing -y
 RUN apt install \
     python3.12 \
     python3.12-dev \
-    python3.12-distutils \
-    python3.12-tk \
-    # python3-pip \
+    python3.12-venv \
     -y
 
-# RUN python3.10 -m pip install --upgrade pip
-# RUN apt install python3-pip -y
 
 # Make python3.10 the default python.
 RUN rm /usr/bin/python3
 RUN ln -s /usr/bin/python3.12 /usr/bin/python3
 RUN ln -s /usr/bin/python3.12 /usr/bin/python
 
-# RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
-# RUN pip install --upgrade pip
-
-
-# Create Mujoco subdir.
-# RUN mkdir /root/.mujoco
-# WORKDIR /root/.mujoco
-# COPY mujoco-3.3.2-linux-x86_64.tar.gz .
-# RUN tar -xvzf mujoco-3.3.2-linux-x86_64.tar.gz
-# RUN rm -r mujoco-3.3.2-linux-x86_64.tar.gz
-
-# Add LD_LIBRARY_PATH environment variable.
-# ENV LD_LIBRARY_PATH "/root/.mujoco/mujoco-3.3.2/bin:${LD_LIBRARY_PATH}"
-# RUN echo 'export LD_LIBRARY_PATH=/root/.mujoco/mujoco-3.3.2/bin:${LD_LIBRARY_PATH}' >> /etc/bash.bashrc
+# Create venv
+RUN mkdir /root/.venv
+WORKDIR /root/.venv
+RUN python3.12 -m venv sam3_env
 
 # Install MuJoCo Python Bindings
 RUN apt update -y
 
 # Install PyTorch
-RUN pip install \
+RUN . /root/.venv/sam3_env/bin/activate && \
+    pip install \
     torch \
     torchaudio \
     torchvision \
     --index-url https://download.pytorch.org/whl/cu128
 
 # RUN pip install setuptools
-RUN pip install \
-    mujoco \
+RUN . /root/.venv/sam3_env/bin/activate && \
+    pip install \
     swig \
     imageio 
 
 # Install other Python Deps
-RUN pip install \
+RUN . /root/.venv/sam3_env/bin/activate && \
+    pip install \
     matplotlib \
-    box2d-py \
+    # box2d-py \
     numpy \
     pandas \
-    seaborn \
+    # seaborn \
     PyQt5
 
-RUN pip install gymnasium[all]
+# Add SAM
+ADD sam3 /root/sam3
+WORKDIR /root/sam3
+RUN . /root/.venv/sam3_env/bin/activate && \
+    pip install -e .
+
+RUN echo ". /root/.venv/sam3_env/bin/activate" >> ~/.bashrc
