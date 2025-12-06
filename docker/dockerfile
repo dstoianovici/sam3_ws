@@ -1,0 +1,85 @@
+# If you want to use a different version of CUDA, view the available
+# images here: https://hub.docker.com/r/nvidia/cuda
+# Note:
+#   - Jax currently supports CUDA versions up to 11.3.
+#   - Tensorflow required CUDA versions after 11.2.
+ARG cuda_docker_tag="12.8.0-cudnn-devel-ubuntu20.04"
+FROM nvidia/cuda:${cuda_docker_tag}
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt update && apt upgrade -y
+
+# tzdata is required below. To avoid hanging, install it first.
+RUN apt install tzdata -y
+RUN apt install git \
+    wget \
+    libgl1-mesa-glx \
+    software-properties-common \
+    vim \
+    gcc \
+    ssh \
+    libx11-dev \
+    xorg \
+    curl \
+    -y
+
+# Install python3.10.
+RUN add-apt-repository ppa:deadsnakes/ppa -y
+RUN apt update -y
+RUN apt install \
+    python3.12 \
+    python3.12-dev \
+    python3.12-distutils \
+    python3.12-tk \
+    # python3-pip \
+    -y
+
+# RUN python3.10 -m pip install --upgrade pip
+# RUN apt install python3-pip -y
+
+# Make python3.10 the default python.
+RUN rm /usr/bin/python3
+RUN ln -s /usr/bin/python3.12 /usr/bin/python3
+RUN ln -s /usr/bin/python3.12 /usr/bin/python
+
+# RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3
+# RUN pip install --upgrade pip
+
+
+# Create Mujoco subdir.
+# RUN mkdir /root/.mujoco
+# WORKDIR /root/.mujoco
+# COPY mujoco-3.3.2-linux-x86_64.tar.gz .
+# RUN tar -xvzf mujoco-3.3.2-linux-x86_64.tar.gz
+# RUN rm -r mujoco-3.3.2-linux-x86_64.tar.gz
+
+# Add LD_LIBRARY_PATH environment variable.
+# ENV LD_LIBRARY_PATH "/root/.mujoco/mujoco-3.3.2/bin:${LD_LIBRARY_PATH}"
+# RUN echo 'export LD_LIBRARY_PATH=/root/.mujoco/mujoco-3.3.2/bin:${LD_LIBRARY_PATH}' >> /etc/bash.bashrc
+
+# Install MuJoCo Python Bindings
+RUN apt update -y
+
+# Install PyTorch
+RUN pip install \
+    torch \
+    torchaudio \
+    torchvision \
+    --index-url https://download.pytorch.org/whl/cu128
+
+# RUN pip install setuptools
+RUN pip install \
+    mujoco \
+    swig \
+    imageio 
+
+# Install other Python Deps
+RUN pip install \
+    matplotlib \
+    box2d-py \
+    numpy \
+    pandas \
+    seaborn \
+    PyQt5
+
+RUN pip install gymnasium[all]

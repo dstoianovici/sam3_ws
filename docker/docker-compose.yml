@@ -1,0 +1,32 @@
+services:
+  rl_gym:
+    container_name: sam3-env
+    image: sam3:latest
+    user: $UID
+    volumes:
+      - ../workspace:/root/workspace
+      - /tmp/.x11-unix:/tmp/.x11-unix:rwx
+      - $HOME/.Xauthority:/root/.Xauthority:rwx
+    network_mode: host
+    environment:
+      DISPLAY: $DISPLAY
+      XAUTHORITY: $XAUTHORITY
+      NVIDIA_DRIVER_CAPABILITIES: all
+      QT_QPA_PLATFORM: xcb
+      XDG_RUNTIME_DIR: $XDG_RUNTIME_DIR
+    cap_add:
+      - SYS_PTRACE
+    devices:
+      - /dev/dri
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+    stdin_open: true
+    tty: true
+    working_dir: /root/workspace
+    command: /bin/bash
